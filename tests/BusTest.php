@@ -14,6 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
+use Symfony\Component\Messenger\Transport\Sender\SendersLocatorInterface;
 
 final class BusTest extends TestCase
 {
@@ -35,7 +36,7 @@ final class BusTest extends TestCase
         $bus->expects(self::once())->method('dispatch')->with(self::identicalTo($query))
             ->willReturn(new Envelope($query, [new HandledStamp($result, 'handler')]));
 
-        self::assertSame($result, (new QueryBus($bus))->ask($query));
+        self::assertSame($result, (new QueryBus($bus, $this->emptySenders()))->ask($query));
     }
 
     public function testQueryRejectsNoHandlers(): void
@@ -52,6 +53,17 @@ final class BusTest extends TestCase
         ]);
     }
 
+    public function testQueryRejectsTransportBeforeDispatch(): void
+    {
+        $query = new readonly class extends Query {};
+        $bus = $this->createMock(MessageBusInterface::class);
+        $bus->expects(self::never())->method('dispatch');
+        $senders = $this->createMock(SendersLocatorInterface::class);
+        $senders->expects(self::once())->method('getSenders')->willReturn(['async' => new \stdClass()]);
+        $this->expectException(LogicException::class);
+        (new QueryBus($bus, $senders))->ask($query);
+    }
+
     private function assertHandlerCountRejected(array $stamps): void
     {
         $query = new readonly class extends Query {};
@@ -61,6 +73,13 @@ final class BusTest extends TestCase
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage(sprintf('exactly one handler, %d handled it', count($stamps)));
-        (new QueryBus($bus))->ask($query);
+        (new QueryBus($bus, $this->emptySenders()))->ask($query);
+    }
+
+    private function emptySenders(): SendersLocatorInterface
+    {
+        $senders = $this->createMock(SendersLocatorInterface::class);
+        $senders->expects(self::once())->method('getSenders')->willReturn([]);
+        return $senders;
     }
 }

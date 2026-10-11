@@ -9,6 +9,7 @@ use Hexagonal\Application\Port\Outbound\IntegrationEventPublisherInterface;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
+/** @implements IntegrationEventPublisherInterface<IntegrationEvent> */
 final readonly class IntegrationEventPublisher implements IntegrationEventPublisherInterface
 {
     public function __construct(

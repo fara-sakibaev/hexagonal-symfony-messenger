@@ -2,16 +2,7 @@
     "name": "fara-sakibaev/hexagonal-symfony-messenger",
     "description": "Symfony Messenger adapter for Hexagonal core contracts",
     "type": "library",
-
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../hexagonal-core",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
+    "license": "MIT",
 
     "autoload": {
         "psr-4": {
@@ -20,14 +11,21 @@
     },
 
     "require": {
-        "php": "^8.4",
-        "fara-sakibaev/hexagonal-core": "@dev",
-        "symfony/messenger": "^7.3 || ^8.0",
-        "symfony/http-kernel": "^7.3 || ^8.0",
-        "symfony/dependency-injection": "^7.3 || ^8.0"
+        "php": "^8.5",
+        "fara-sakibaev/hexagonal-core": "^0.0.4",
+        "symfony/messenger": "^7.4 || ^8.1",
+        "symfony/http-kernel": "^7.4 || ^8.1",
+        "symfony/dependency-injection": "^7.4 || ^8.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^12.0",
+        "phpstan/phpstan": "^2.0",
         "symfony/framework-bundle": "^7.3 || ^8.0"
+    },
+    "scripts": {
+        "test": "phpunit --display-all-issues --fail-on-all-issues",
+        "analyse": "phpstan analyse --debug --no-progress --level 8 -c phpstan.neon src tests/BundleIntegrationTest.php tests/fixtures/static-valid.php",
+        "analyse:invalid": "php tests/check-invalid.php",
+        "check": ["@test", "@analyse", "@analyse:invalid", "composer validate --no-check-publish"]
     }
 }

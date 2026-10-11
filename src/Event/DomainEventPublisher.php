@@ -9,6 +9,7 @@ use Hexagonal\Domain\DomainEvent;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
+/** @implements DomainEventPublisherInterface<DomainEvent> */
 final readonly class DomainEventPublisher implements DomainEventPublisherInterface
 {
     public function __construct(

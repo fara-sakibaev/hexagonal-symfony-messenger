@@ -17,6 +17,7 @@ use Hexagonal\SymfonyMessenger\Event\DomainEventPublisher;
 use Hexagonal\SymfonyMessenger\Event\IntegrationEventPublisher;
 use Hexagonal\SymfonyMessenger\Query\QueryBus;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
@@ -35,16 +36,21 @@ final class HexagonalSymfonyMessengerBundle extends AbstractBundle
             IntegrationEventHandlerInterface::class => 'integration_event.bus',
         ] as $interface => $bus) {
             $container->registerForAutoconfiguration($interface)
-                ->addTag('messenger.message_handler', ['bus' => $bus]);
+                ->addTag('messenger.message_handler', ['bus' => $bus, 'method' => 'handle']);
         }
+
+        $container->addCompilerPass(new HandlerConfigurationPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, -1);
     }
 
+    /** @param array<string, mixed> $config */
     public function loadExtension(array $config, ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
         $services = $configurator->services();
 
         $services->set(CommandBus::class)->arg('$messageBus', service('command.bus'));
-        $services->set(QueryBus::class)->arg('$messageBus', service('query.bus'));
+        $services->set(QueryBus::class)
+            ->arg('$messageBus', service('query.bus'))
+            ->arg('$senders', service('messenger.senders_locator'));
         $services->set(DomainEventPublisher::class)->arg('$messageBus', service('domain_event.bus'));
         $services->set(IntegrationEventPublisher::class)->arg('$messageBus', service('integration_event.bus'));
 

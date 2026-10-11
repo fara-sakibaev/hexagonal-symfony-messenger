@@ -1,0 +1,2 @@
+includes:
+    - vendor/fara-sakibaev/hexagonal-core/phpstan-extension.neon

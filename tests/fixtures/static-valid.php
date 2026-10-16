@@ -8,17 +8,25 @@ use Hexagonal\Application\DTO\DTO;
 use Hexagonal\Application\Port\Inbound\QueryBusInterface;
 use Hexagonal\Application\Query\Query;
 use Hexagonal\Application\Query\QueryHandlerInterface;
+
 use function PHPStan\Testing\assertType;
 
-final readonly class UserDTO extends DTO {}
+final readonly class UserDTO extends DTO
+{
+}
 
 /** @extends Query<UserDTO> */
-final readonly class FindUser extends Query {}
+final readonly class FindUser extends Query
+{
+}
 
 /** @implements QueryHandlerInterface<UserDTO, FindUser> */
 final class FindUserHandler implements QueryHandlerInterface
 {
-    public function handle(FindUser $query): UserDTO { return new UserDTO(); }
+    public function handle(FindUser $query): UserDTO
+    {
+        return new UserDTO();
+    }
 }
 
 function checkResult(QueryBusInterface $bus): void

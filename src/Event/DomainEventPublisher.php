@@ -14,8 +14,7 @@ final readonly class DomainEventPublisher implements DomainEventPublisherInterfa
 {
     public function __construct(
         private MessageBusInterface $messageBus,
-    )
-    {
+    ) {
     }
 
     /**

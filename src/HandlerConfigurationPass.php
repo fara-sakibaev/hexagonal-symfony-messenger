@@ -5,9 +5,21 @@ declare(strict_types=1);
 namespace Hexagonal\SymfonyMessenger;
 
 use Hexagonal\SymfonyMessenger\Middleware\SingleHandlerMiddleware;
+use ReflectionMethod;
+use ReflectionNamedType;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\RuntimeException;
+
+use function array_filter;
+use function class_exists;
+use function count;
+use function implode;
+use function in_array;
+use function interface_exists;
+use function method_exists;
+use function sprintf;
+use function str_ends_with;
 
 final class HandlerConfigurationPass implements CompilerPassInterface
 {
@@ -28,16 +40,16 @@ final class HandlerConfigurationPass implements CompilerPassInterface
                     continue;
                 }
                 $class = $container->getDefinition($id)->getClass();
-                if ($class === null || !class_exists($class)) {
+                if (null === $class || !class_exists($class)) {
                     continue;
                 }
                 $method = $tag['method'] ?? '__invoke';
                 $message = $tag['handles'] ?? null;
-                if ($message === null && method_exists($class, $method)) {
-                    $type = (new \ReflectionMethod($class, $method))->getParameters()[0]->getType();
-                    $message = $type instanceof \ReflectionNamedType && !$type->isBuiltin() ? $type->getName() : null;
+                if (null === $message && method_exists($class, $method)) {
+                    $type = new ReflectionMethod($class, $method)->getParameters()[0]->getType();
+                    $message = $type instanceof ReflectionNamedType && !$type->isBuiltin() ? $type->getName() : null;
                 }
-                if ($message !== null && !str_ends_with($message, '*') && !interface_exists($message)) {
+                if (null !== $message && !str_ends_with($message, '*') && !interface_exists($message)) {
                     $counts[$bus][$message][] = $id;
                 }
             }

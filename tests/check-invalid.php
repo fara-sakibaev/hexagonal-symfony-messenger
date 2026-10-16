@@ -29,7 +29,7 @@ if (!str_contains($normalized, '[ERROR] Found 4 errors')) {
     fwrite(STDERR, "Unexpected PHPStan diagnostics\n$output");
     exit(1);
 }
-if ($status !== 1) {
+if (1 !== $status) {
     fwrite(STDERR, "Unexpected PHPStan exit code $status\n$output");
     exit(1);
 }

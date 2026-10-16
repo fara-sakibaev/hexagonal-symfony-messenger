@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Hexagonal\SymfonyMessenger\Middleware;
 
+use LogicException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\NoHandlerForMessageException;
 use Symfony\Component\Messenger\Handler\HandlersLocatorInterface;
 use Symfony\Component\Messenger\Middleware\HandleMessageMiddleware;
 use Symfony\Component\Messenger\Middleware\StackInterface;
+
+use function sprintf;
 
 final class SingleHandlerMiddleware extends HandleMessageMiddleware
 {
@@ -22,12 +25,13 @@ final class SingleHandlerMiddleware extends HandleMessageMiddleware
         $count = 0;
         foreach ($this->locator->getHandlers($envelope) as $_) {
             if (++$count > 1) {
-                throw new \LogicException(sprintf('Multiple handlers for %s.', $envelope->getMessage()::class));
+                throw new LogicException(sprintf('Multiple handlers for %s.', $envelope->getMessage()::class));
             }
         }
-        if ($count === 0) {
+        if (0 === $count) {
             throw new NoHandlerForMessageException(sprintf('No handler for message "%s".', $envelope->getMessage()::class));
         }
+
         return parent::handle($envelope, $stack);
     }
 }

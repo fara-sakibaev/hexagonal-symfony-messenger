@@ -14,8 +14,7 @@ final readonly class IntegrationEventPublisher implements IntegrationEventPublis
 {
     public function __construct(
         private MessageBusInterface $messageBus,
-    )
-    {
+    ) {
     }
 
     /**

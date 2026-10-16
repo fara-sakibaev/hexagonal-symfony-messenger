@@ -11,10 +11,14 @@ use Hexagonal\SymfonyMessenger\Command\CommandBus;
 use Hexagonal\SymfonyMessenger\Query\QueryBus;
 use LogicException;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Messenger\Transport\Sender\SendersLocatorInterface;
+
+use function count;
+use function sprintf;
 
 final class BusTest extends TestCase
 {
@@ -25,7 +29,7 @@ final class BusTest extends TestCase
         $bus->expects(self::once())->method('dispatch')->with(self::identicalTo($command))
             ->willReturn(new Envelope($command));
 
-        (new CommandBus($bus))->dispatch($command);
+        new CommandBus($bus)->dispatch($command);
     }
 
     public function testQueryReturnsSingleHandlerResult(): void
@@ -36,7 +40,7 @@ final class BusTest extends TestCase
         $bus->expects(self::once())->method('dispatch')->with(self::identicalTo($query))
             ->willReturn(new Envelope($query, [new HandledStamp($result, 'handler')]));
 
-        self::assertSame($result, (new QueryBus($bus, $this->emptySenders()))->ask($query));
+        self::assertSame($result, new QueryBus($bus, $this->emptySenders())->ask($query));
     }
 
     public function testQueryRejectsNoHandlers(): void
@@ -59,9 +63,9 @@ final class BusTest extends TestCase
         $bus = $this->createMock(MessageBusInterface::class);
         $bus->expects(self::never())->method('dispatch');
         $senders = $this->createMock(SendersLocatorInterface::class);
-        $senders->expects(self::once())->method('getSenders')->willReturn(['async' => new \stdClass()]);
+        $senders->expects(self::once())->method('getSenders')->willReturn(['async' => new stdClass()]);
         $this->expectException(LogicException::class);
-        (new QueryBus($bus, $senders))->ask($query);
+        new QueryBus($bus, $senders)->ask($query);
     }
 
     private function assertHandlerCountRejected(array $stamps): void
@@ -73,13 +77,14 @@ final class BusTest extends TestCase
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage(sprintf('exactly one handler, %d handled it', count($stamps)));
-        (new QueryBus($bus, $this->emptySenders()))->ask($query);
+        new QueryBus($bus, $this->emptySenders())->ask($query);
     }
 
     private function emptySenders(): SendersLocatorInterface
     {
         $senders = $this->createMock(SendersLocatorInterface::class);
         $senders->expects(self::once())->method('getSenders')->willReturn([]);
+
         return $senders;
     }
 }

@@ -8,6 +8,7 @@ use Hexagonal\Application\Command\Command;
 use Hexagonal\Application\Command\CommandHandlerInterface;
 use Hexagonal\Application\DTO\DTO;
 use Hexagonal\Application\Event\DomainEventHandlerInterface;
+use Hexagonal\Application\Event\IntegrationEvent;
 use Hexagonal\Application\Event\IntegrationEventHandlerInterface;
 use Hexagonal\Application\Port\Inbound\CommandBusInterface;
 use Hexagonal\Application\Port\Inbound\QueryBusInterface;
@@ -15,20 +16,32 @@ use Hexagonal\Application\Port\Outbound\DomainEventPublisherInterface;
 use Hexagonal\Application\Port\Outbound\IntegrationEventPublisherInterface;
 use Hexagonal\Application\Query\Query;
 use Hexagonal\Application\Query\QueryHandlerInterface;
+use Hexagonal\Domain\DomainEvent;
 use Hexagonal\SymfonyMessenger\Command\CommandBus;
 use Hexagonal\SymfonyMessenger\Event\DomainEventPublisher;
 use Hexagonal\SymfonyMessenger\Event\IntegrationEventPublisher;
 use Hexagonal\SymfonyMessenger\HexagonalSymfonyMessengerBundle;
+use Hexagonal\SymfonyMessenger\Middleware\SingleHandlerMiddleware;
 use Hexagonal\SymfonyMessenger\Query\QueryBus;
+use LogicException;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use ReflectionException;
 use ReflectionProperty;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Kernel;
-use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\NoHandlerForMessageException;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\ReceivedStamp;
+use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
+
+use function in_array;
+use function sys_get_temp_dir;
 
 final class BundleIntegrationTest extends TestCase
 {
@@ -49,7 +62,7 @@ final class BundleIntegrationTest extends TestCase
     }
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function testAdaptersResolveAndDispatchThroughNamedBuses(): void
     {
@@ -58,7 +71,7 @@ final class BundleIntegrationTest extends TestCase
 
         try {
             $container = $kernel->getContainer()->get('test.service_container');
-            self::assertInstanceOf(\Psr\Container\ContainerInterface::class, $container);
+            self::assertInstanceOf(ContainerInterface::class, $container);
             $consumer = $container->get(BundleTestConsumer::class);
             self::assertInstanceOf(BundleTestConsumer::class, $consumer);
 
@@ -97,7 +110,7 @@ final class BundleIntegrationTest extends TestCase
         $kernel->boot();
         try {
             $container = $kernel->getContainer()->get('test.service_container');
-            self::assertInstanceOf(\Psr\Container\ContainerInterface::class, $container);
+            self::assertInstanceOf(ContainerInterface::class, $container);
             $consumer = $container->get(BundleTestConsumer::class);
             self::assertInstanceOf(BundleTestConsumer::class, $consumer);
             $bus = $consumer->services[CommandBusInterface::class];
@@ -117,7 +130,7 @@ final class BundleIntegrationTest extends TestCase
         $kernel->boot();
         try {
             $container = $kernel->getContainer()->get('test.service_container');
-            self::assertInstanceOf(\Psr\Container\ContainerInterface::class, $container);
+            self::assertInstanceOf(ContainerInterface::class, $container);
             $consumer = $container->get(BundleTestConsumer::class);
             self::assertInstanceOf(BundleTestConsumer::class, $consumer);
             $services = $consumer->services;
@@ -142,7 +155,7 @@ final class BundleIntegrationTest extends TestCase
         try {
             $kernel->boot();
             self::fail('Expected duplicate handler error.');
-        } catch (\Symfony\Component\DependencyInjection\Exception\RuntimeException $error) {
+        } catch (RuntimeException $error) {
             self::assertStringContainsString('multiple handlers', $error->getMessage());
             self::assertSame(0, BundleTestCommandHandler::$calls);
             self::assertSame(0, BundleTestSecondCommandHandler::$calls);
@@ -157,14 +170,14 @@ final class BundleIntegrationTest extends TestCase
         $kernel->boot();
         try {
             $container = $kernel->getContainer()->get('test.service_container');
-            self::assertInstanceOf(\Psr\Container\ContainerInterface::class, $container);
+            self::assertInstanceOf(ContainerInterface::class, $container);
             $bus = $container->get('command.bus');
             self::assertInstanceOf(MessageBusInterface::class, $bus);
-            self::assertInstanceOf(\Hexagonal\SymfonyMessenger\Middleware\SingleHandlerMiddleware::class, $container->get('command.bus.middleware.handle_message'));
+            self::assertInstanceOf(SingleHandlerMiddleware::class, $container->get('command.bus.middleware.handle_message'));
             try {
-                $bus->dispatch(new \Symfony\Component\Messenger\Envelope(new BundleTestCommand(), [new \Symfony\Component\Messenger\Stamp\ReceivedStamp('async')]));
+                $bus->dispatch(new Envelope(new BundleTestCommand(), [new ReceivedStamp('async')]));
                 self::fail('Expected duplicate handler error.');
-            } catch (\LogicException $error) {
+            } catch (LogicException $error) {
                 self::assertStringContainsString('Multiple handlers', $error->getMessage());
                 self::assertSame(0, BundleTestCommandHandler::$calls);
                 self::assertSame(0, BundleGenericCommandHandler::$calls);
@@ -180,7 +193,7 @@ final class BundleIntegrationTest extends TestCase
         $kernel->boot();
         try {
             $container = $kernel->getContainer()->get('test.service_container');
-            self::assertInstanceOf(\Psr\Container\ContainerInterface::class, $container);
+            self::assertInstanceOf(ContainerInterface::class, $container);
             $consumer = $container->get(BundleTestConsumer::class);
             self::assertInstanceOf(BundleTestConsumer::class, $consumer);
             $bus = $consumer->services[QueryBusInterface::class];
@@ -188,10 +201,10 @@ final class BundleIntegrationTest extends TestCase
             try {
                 $bus->ask(new BundleTestQuery());
                 self::fail('Expected query routing error.');
-            } catch (\LogicException $error) {
+            } catch (LogicException $error) {
                 self::assertStringContainsString('must not be routed', $error->getMessage());
                 $transport = $container->get('messenger.transport.async');
-                self::assertInstanceOf(\Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport::class, $transport);
+                self::assertInstanceOf(InMemoryTransport::class, $transport);
                 self::assertCount(0, $transport->getSent());
             }
         } finally {
@@ -207,7 +220,7 @@ final class BundleIntegrationTest extends TestCase
         $kernel->boot();
         try {
             $container = $kernel->getContainer()->get('test.service_container');
-            self::assertInstanceOf(\Psr\Container\ContainerInterface::class, $container);
+            self::assertInstanceOf(ContainerInterface::class, $container);
             $consumer = $container->get(BundleTestConsumer::class);
             self::assertInstanceOf(BundleTestConsumer::class, $consumer);
             $bus = $consumer->services[QueryBusInterface::class];
@@ -215,7 +228,7 @@ final class BundleIntegrationTest extends TestCase
             try {
                 $bus->ask(new BundleTestQuery());
                 self::fail('Expected duplicate query handlers.');
-            } catch (\LogicException $error) {
+            } catch (LogicException $error) {
                 self::assertStringContainsString('Multiple handlers', $error->getMessage());
                 self::assertSame(0, BundleTestQueryHandler::$calls);
                 self::assertSame(0, BundleGenericQueryHandler::$calls);
@@ -232,7 +245,7 @@ final class BundleIntegrationTest extends TestCase
         $kernel->boot();
         try {
             $container = $kernel->getContainer()->get('test.service_container');
-            self::assertInstanceOf(\Psr\Container\ContainerInterface::class, $container);
+            self::assertInstanceOf(ContainerInterface::class, $container);
             $consumer = $container->get(BundleTestConsumer::class);
             self::assertInstanceOf(BundleTestConsumer::class, $consumer);
             $commandBus = $consumer->services[CommandBusInterface::class];
@@ -240,7 +253,7 @@ final class BundleIntegrationTest extends TestCase
             $commandBus->dispatch(new BundleTestCommand());
             self::assertSame(0, BundleTestCommandHandler::$calls);
             $transport = $container->get('messenger.transport.async');
-            self::assertInstanceOf(\Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport::class, $transport);
+            self::assertInstanceOf(InMemoryTransport::class, $transport);
             self::assertCount(1, $transport->getSent());
         } finally {
             $kernel->shutdown();
@@ -262,7 +275,9 @@ final class BundleTestKernel extends Kernel
             $container->loadFromExtension('framework', [
                 'secret' => 'test-secret',
                 'test' => true,
-                'messenger' => ['default_bus' => 'command.bus', 'transports' => in_array($mode, ['async', 'query_async'], true) ? ['async' => 'in-memory://'] : [], 'routing' => match ($mode) { 'async' => [BundleTestCommand::class => 'async'], 'query_async' => [BundleTestQuery::class => 'async'], default => [] }, 'buses' => [
+                'messenger' => ['default_bus' => 'command.bus', 'transports' => in_array($mode, ['async', 'query_async'], true) ? ['async' => 'in-memory://'] : [], 'routing' => match ($mode) {
+                    'async' => [BundleTestCommand::class => 'async'], 'query_async' => [BundleTestQuery::class => 'async'], default => []
+                }, 'buses' => [
                     'command.bus' => [],
                     'query.bus' => [],
                     'domain_event.bus' => [],
@@ -271,14 +286,14 @@ final class BundleTestKernel extends Kernel
             ]);
 
             $container->register(BundleTestCommandHandler::class, BundleTestCommandHandler::class)->setAutoconfigured(true);
-            if ($mode === 'duplicate') {
+            if ('duplicate' === $mode) {
                 $container->register(BundleTestSecondCommandHandler::class, BundleTestSecondCommandHandler::class)->setAutoconfigured(true);
             }
-            if ($mode === 'worker_duplicate') {
+            if ('worker_duplicate' === $mode) {
                 $container->register(BundleGenericCommandHandler::class, BundleGenericCommandHandler::class)->setAutoconfigured(true);
             }
             $container->register(BundleTestQueryHandler::class, BundleTestQueryHandler::class)->setAutoconfigured(true);
-            if ($mode === 'query_duplicate') {
+            if ('query_duplicate' === $mode) {
                 $container->register(BundleGenericQueryHandler::class, BundleGenericQueryHandler::class)->setAutoconfigured(true);
             }
             $container->register(BundleTestDomainHandler::class, BundleTestDomainHandler::class)->setAutoconfigured(true);
@@ -309,8 +324,8 @@ final class BundleTestConsumer
     public array $services;
 
     /**
-     * @param DomainEventPublisherInterface<\Hexagonal\Domain\DomainEvent> $domainPublisher
-     * @param IntegrationEventPublisherInterface<\Hexagonal\Application\Event\IntegrationEvent> $integrationPublisher
+     * @param DomainEventPublisherInterface<DomainEvent>           $domainPublisher
+     * @param IntegrationEventPublisherInterface<IntegrationEvent> $integrationPublisher
      */
     public function __construct(
         CommandBusInterface $commandBus,
@@ -327,8 +342,12 @@ final class BundleTestConsumer
     }
 }
 
-final readonly class BundleTestCommand extends Command {}
-final readonly class BundleMissingCommand extends Command {}
+final readonly class BundleTestCommand extends Command
+{
+}
+final readonly class BundleMissingCommand extends Command
+{
+}
 
 /** @implements CommandHandlerInterface<BundleTestCommand> */
 final class BundleTestCommandHandler implements CommandHandlerInterface
@@ -345,31 +364,45 @@ final class BundleTestCommandHandler implements CommandHandlerInterface
 final class BundleTestSecondCommandHandler implements CommandHandlerInterface
 {
     public static int $calls = 0;
-    public function handle(BundleTestCommand $command): void { ++self::$calls; }
+
+    public function handle(BundleTestCommand $command): void
+    {
+        ++self::$calls;
+    }
 }
 
 /** @implements CommandHandlerInterface<Command> */
 final class BundleGenericCommandHandler implements CommandHandlerInterface
 {
     public static int $calls = 0;
-    public function handle(Command $command): void { ++self::$calls; }
+
+    public function handle(Command $command): void
+    {
+        ++self::$calls;
+    }
 }
 
 /** @extends Query<BundleTestResult> */
-final readonly class BundleTestQuery extends Query {}
+final readonly class BundleTestQuery extends Query
+{
+}
 
 final readonly class BundleTestResult extends DTO
 {
-    public function __construct(public string $value) {}
+    public function __construct(public string $value)
+    {
+    }
 }
 
 /** @implements QueryHandlerInterface<BundleTestResult, BundleTestQuery> */
 final class BundleTestQueryHandler implements QueryHandlerInterface
 {
     public static int $calls = 0;
+
     public function handle(BundleTestQuery $query): BundleTestResult
     {
         ++self::$calls;
+
         return new BundleTestResult('found');
     }
 }
@@ -378,23 +411,41 @@ final class BundleTestQueryHandler implements QueryHandlerInterface
 final class BundleGenericQueryHandler implements QueryHandlerInterface
 {
     public static int $calls = 0;
+
     /** @param Query<DTO> $query */
-    public function handle(Query $query): DTO { ++self::$calls; return new BundleTestResult('generic'); }
+    public function handle(Query $query): DTO
+    {
+        ++self::$calls;
+
+        return new BundleTestResult('generic');
+    }
 }
 
-final readonly class BundleTestDomainEvent extends \Hexagonal\Domain\DomainEvent {}
-final readonly class BundleTestIntegrationEvent extends \Hexagonal\Application\Event\IntegrationEvent {}
+final readonly class BundleTestDomainEvent extends DomainEvent
+{
+}
+final readonly class BundleTestIntegrationEvent extends IntegrationEvent
+{
+}
 
 /** @implements DomainEventHandlerInterface<BundleTestDomainEvent> */
 final class BundleTestDomainHandler implements DomainEventHandlerInterface
 {
     public static int $calls = 0;
-    public function handle(BundleTestDomainEvent $event): void { ++self::$calls; }
+
+    public function handle(BundleTestDomainEvent $event): void
+    {
+        ++self::$calls;
+    }
 }
 
 /** @implements IntegrationEventHandlerInterface<BundleTestIntegrationEvent> */
 final class BundleTestIntegrationHandler implements IntegrationEventHandlerInterface
 {
     public static int $calls = 0;
-    public function handle(BundleTestIntegrationEvent $event): void { ++self::$calls; }
+
+    public function handle(BundleTestIntegrationEvent $event): void
+    {
+        ++self::$calls;
+    }
 }

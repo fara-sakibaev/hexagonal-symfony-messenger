@@ -3,16 +3,14 @@
     "description": "Symfony Messenger adapter for Hexagonal core contracts",
     "type": "library",
     "license": "MIT",
-
     "autoload": {
         "psr-4": {
             "Hexagonal\\SymfonyMessenger\\": "src/"
         }
     },
-
     "require": {
         "php": "^8.5",
-        "fara-sakibaev/hexagonal-core": "^0.0.6",
+        "fara-sakibaev/hexagonal-core": "^0.0.7",
         "symfony/messenger": "^7.4 || ^8.1",
         "symfony/http-kernel": "^7.4 || ^8.1",
         "symfony/dependency-injection": "^7.4 || ^8.1"
@@ -20,12 +18,21 @@
     "require-dev": {
         "phpunit/phpunit": "^12.0",
         "phpstan/phpstan": "^2.0",
-        "symfony/framework-bundle": "^7.3 || ^8.0"
+        "symfony/framework-bundle": "^7.3 || ^8.0",
+        "friendsofphp/php-cs-fixer": "^3.95"
     },
     "scripts": {
         "test": "phpunit --display-all-issues --fail-on-all-issues",
         "analyse": "phpstan analyse --debug --no-progress --level 8 -c phpstan.neon src tests/BundleIntegrationTest.php tests/fixtures/static-valid.php",
         "analyse:invalid": "php tests/check-invalid.php",
-        "check": ["@test", "@analyse", "@analyse:invalid", "composer validate --no-check-publish"]
+        "check": [
+            "@cs:check",
+            "@test",
+            "@analyse",
+            "@analyse:invalid",
+            "composer validate --no-check-publish"
+        ],
+        "cs:check": "php-cs-fixer fix --dry-run --diff --sequential",
+        "cs:fix": "php-cs-fixer fix --sequential"
     }
 }

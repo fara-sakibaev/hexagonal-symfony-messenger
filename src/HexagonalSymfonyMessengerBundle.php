@@ -16,8 +16,8 @@ use Hexagonal\SymfonyMessenger\Command\CommandBus;
 use Hexagonal\SymfonyMessenger\Event\DomainEventPublisher;
 use Hexagonal\SymfonyMessenger\Event\IntegrationEventPublisher;
 use Hexagonal\SymfonyMessenger\Query\QueryBus;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 

@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7b848ea178c2819decd90f52944f3a50",
+    "content-hash": "e60892e8cb83a94b6968b927b95aceeb",
     "packages": [
         {
             "name": "fara-sakibaev/hexagonal-core",
-            "version": "0.0.4",
+            "version": "0.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fara-sakibaev/hexagonal-core.git",
-                "reference": "fadc5ec38627cc8be879143b4f0f3a112ccd4a36"
+                "reference": "3c9b258b653c4d074c45e269d2b561f438cd73e9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fara-sakibaev/hexagonal-core/zipball/fadc5ec38627cc8be879143b4f0f3a112ccd4a36",
-                "reference": "fadc5ec38627cc8be879143b4f0f3a112ccd4a36",
+                "url": "https://api.github.com/repos/fara-sakibaev/hexagonal-core/zipball/3c9b258b653c4d074c45e269d2b561f438cd73e9",
+                "reference": "3c9b258b653c4d074c45e269d2b561f438cd73e9",
                 "shasum": ""
             },
             "require": {
@@ -45,9 +45,9 @@
             "description": "Contracts for hexagonal architecture",
             "support": {
                 "issues": "https://github.com/fara-sakibaev/hexagonal-core/issues",
-                "source": "https://github.com/fara-sakibaev/hexagonal-core/tree/0.0.4"
+                "source": "https://github.com/fara-sakibaev/hexagonal-core/tree/0.0.5"
             },
-            "time": "2026-10-11T13:32:26+00:00"
+            "time": "2026-10-16T18:22:32+00:00"
         },
         {
             "name": "psr/clock",

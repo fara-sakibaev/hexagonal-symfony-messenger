@@ -10,7 +10,7 @@
     },
     "require": {
         "php": "^8.5",
-        "fara-sakibaev/hexagonal-core": "^0.0.8",
+        "fara-sakibaev/hexagonal-core": "^0.0.9",
         "symfony/messenger": "^7.4 || ^8.1",
         "symfony/http-kernel": "^7.4 || ^8.1",
         "symfony/dependency-injection": "^7.4 || ^8.1"

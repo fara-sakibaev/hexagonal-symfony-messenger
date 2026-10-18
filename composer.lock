@@ -4,25 +4,26 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c5f2374c9125c020e40371319211fd10",
+    "content-hash": "a8d90ab6f5b3b2339f6a8199b1412a6a",
     "packages": [
         {
             "name": "fara-sakibaev/hexagonal-core",
-            "version": "0.0.7",
+            "version": "0.0.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fara-sakibaev/hexagonal-core.git",
-                "reference": "c8129b05164b6ae4727bcdf684b533a366412a03"
+                "reference": "46f7d7c8eeeaa8a2f9aaa9cc77d6d77682da01ab"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fara-sakibaev/hexagonal-core/zipball/c8129b05164b6ae4727bcdf684b533a366412a03",
-                "reference": "c8129b05164b6ae4727bcdf684b533a366412a03",
+                "url": "https://api.github.com/repos/fara-sakibaev/hexagonal-core/zipball/46f7d7c8eeeaa8a2f9aaa9cc77d6d77682da01ab",
+                "reference": "46f7d7c8eeeaa8a2f9aaa9cc77d6d77682da01ab",
                 "shasum": ""
             },
             "require": {
                 "ext-simplexml": "*",
                 "php": "^8.5",
+                "phpstan/phpdoc-parser": "^2",
                 "symfony/uid": "^7.4 || ^8.1"
             },
             "require-dev": {
@@ -46,9 +47,56 @@
             "description": "Contracts for hexagonal architecture",
             "support": {
                 "issues": "https://github.com/fara-sakibaev/hexagonal-core/issues",
-                "source": "https://github.com/fara-sakibaev/hexagonal-core/tree/0.0.7"
+                "source": "https://github.com/fara-sakibaev/hexagonal-core/tree/0.0.8"
             },
-            "time": "2026-10-16T19:31:12+00:00"
+            "time": "2026-10-18T11:15:05+00:00"
+        },
+        {
+            "name": "phpstan/phpdoc-parser",
+            "version": "2.3.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/phpstan/phpdoc-parser.git",
+                "reference": "1427af4647235b4a73b13940b1f1258d3584f36e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/1427af4647235b4a73b13940b1f1258d3584f36e",
+                "reference": "1427af4647235b4a73b13940b1f1258d3584f36e",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4 || ^8.0"
+            },
+            "require-dev": {
+                "doctrine/annotations": "^2.0",
+                "nikic/php-parser": "^5.3.0",
+                "php-parallel-lint/php-parallel-lint": "^1.2",
+                "phpstan/extension-installer": "^1.0",
+                "phpstan/phpstan": "^2.0",
+                "phpstan/phpstan-phpunit": "^2.0",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^9.6",
+                "symfony/process": "^5.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PHPStan\\PhpDocParser\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "PHPDoc parser with support for nullable, intersection and generic types",
+            "support": {
+                "issues": "https://github.com/phpstan/phpdoc-parser/issues",
+                "source": "https://github.com/phpstan/phpdoc-parser/tree/2.3.6"
+            },
+            "time": "2026-09-27T20:07:45+00:00"
         },
         {
             "name": "psr/clock",
